@@ -1,0 +1,136 @@
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: _USERNAME_-factory
+  labels:
+    kubernetes.io/metadata.name: _USERNAME_-factory
+    username: _USERNAME_
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: _USERNAME_-machinery
+  labels:
+    kubernetes.io/metadata.name: _USERNAME_-machinery
+    username: _USERNAME_
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-from-_USERNAME_-projects
+  namespace: _USERNAME_-factory
+spec:
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          username: _USERNAME_
+  podSelector: {}
+  policyTypes:
+  - Ingress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-from-_USERNAME_-projects
+  namespace: _USERNAME_-machinery
+spec:
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          username: _USERNAME_
+  podSelector: {}
+  policyTypes:
+  - Ingress
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: _USERNAME_-factory-quota
+  namespace: _USERNAME_-factory
+spec:
+  hard:
+    requests.cpu: '2'
+    requests.memory: 6Gi
+    limits.cpu: '2'
+    limits.memory: 6Gi
+    requests.storage: 6Gi
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: _USERNAME_-machinery-quota
+  namespace: _USERNAME_-machinery
+spec:
+  hard:
+    requests.cpu: 500m
+    requests.memory: 2Gi
+    limits.cpu: 500m
+    limits.memory: 2Gi
+    requests.storage: 2Gi
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: _USERNAME_-factory-admin
+  namespace: _USERNAME_-factory
+subjects:
+  - kind: User
+    apiGroup: rbac.authorization.k8s.io
+    name: _USERNAME_
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: admin
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: _USERNAME_-machinery-admin
+  namespace: _USERNAME_-machinery
+subjects:
+  - kind: User
+    apiGroup: rbac.authorization.k8s.io
+    name: _USERNAME_
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: admin
+---
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: amq-broker-_USERNAME_-factory
+  namespace: _USERNAME_-factory
+spec:
+  targetNamespaces:
+    - _USERNAME_-factory
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: amq-broker-_USERNAME_-factory
+  namespace: _USERNAME_-factory
+spec:
+  channel: current
+  installPlanApproval: Automatic
+  name: amq-broker
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
+  startingCSV: amq-broker-operator.v7.8.1-opr-3
+---
+kind: LimitRange
+apiVersion: v1
+metadata:
+  name: limit-_USERNAME_-factory
+  namespace: _USERNAME_-factory
+spec:
+  limits:
+    - type: Container
+      default:
+        cpu: 200m
+        memory: 400Mi
+      defaultRequest:
+        cpu: 50m
+        memory: 100Mi
